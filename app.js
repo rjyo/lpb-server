@@ -4,15 +4,19 @@ var express = require('express')
 var app = express();
 
 app.use(express.static(__dirname + '/public'));
-// app.use(express.logger());
+app.use(express.logger());
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
 app.use(express.bodyParser());
 
 // Start a game with specified board, the game_id will be retuned
 app.get('/api/create/:board', function(req, res) {
-  var gameId = l.createGame(req.params.board);
-  res.json({game_id: gameId});
+  if (/^[a-zA-Z]{25}$/.test(req.params.board)) {
+    var gameId = l.createGame(req.params.board);
+    res.json({game_id: gameId});
+  } else {
+    res.send(406, {error: 'Format error for board: ' + req.params.board});
+  }
 });
 
 // list all games that are available to join
@@ -38,10 +42,16 @@ function checkAuth(req, res, next) {
 function checkJoined(req, res, next) {
   var currentGame = req.game.game();
   if (!currentGame) {
-    return res.send(404, {error: 'Game ID not available' });
+    return res.send(404, {error: 'Game ID does not exists' });
   } else if (currentGame.players.indexOf(req.game.playerId) == -1) {
     return res.send(404, {error: 'You haven\'t joined this game.' });
-  } else if (currentGame.status == 0) {
+  }
+  next();
+}
+
+function checkStarted(req, res, next) {
+  var currentGame = req.game.game();
+  if (currentGame.status == 0) {
     return res.send(406, {error: 'Game not have enough players to start' });
   }
   next();
@@ -57,7 +67,7 @@ app.get('/api/join', checkAuth, function(req, res) {
 });
 
 // Input a move
-app.get('/api/move/:move?', checkAuth, checkJoined, function(req, res) {
+app.get('/api/move/:move?', checkAuth, checkJoined, checkStarted, function(req, res) {
   if (!req.params.move) {
     res.json(req.game.lastMove());
   } else {
@@ -73,7 +83,7 @@ app.get('/api/move/:move?', checkAuth, checkJoined, function(req, res) {
 });
 
 // Resign a game
-app.get('/api/resign', checkAuth, checkJoined, function(req, res) {
+app.get('/api/resign', checkAuth, checkJoined, checkStarted, function(req, res) {
   if (req.game.resign()) {
     res.send(200);
   } else {
