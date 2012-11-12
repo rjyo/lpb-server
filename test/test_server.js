@@ -12,7 +12,7 @@ describe('User API', function(){
 
   it('GET /api/create/:board should return 200', function(done){
     request(app)
-      .get('/api/create/testboard')
+      .get('/api/create/aaaaaaaaaaaaaaaaaaaaaaaaa')
       .expect('Content-Type', /json/)
       .expect(200)
       .end(function(err, res) {
