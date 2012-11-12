@@ -29,19 +29,19 @@ describe('User API', function(){
       .end(function(err, res) {
         var list = res.body;
         list.should.be.an.instanceOf(Array);
-        gameId = list[0];
+        gameId = list[0][0];
         if (!err) done();
       });
   });
 
   // Precondition Failed
-  it('GET /api/join/:game_id without header should return 406', function(done){
+  it('GET /api/join without header should return 406', function(done){
     request(app)
       .get('/api/join')
       .expect(406, done);
   });
 
-  it('GET /api/join/:game_id should return 404', function(done){
+  it('GET /api/join should return 404', function(done){
     request(app)
       .get('/api/join')
       .set('x-lpb-player_id', 'PLAYER1_ID')
@@ -150,6 +150,7 @@ describe('Game Logic', function(){
       .end(function(err, res) {
         var game = res.body;
         game.status.should.eql(2);
+        game.players.length.should.eql(2);
         game.steps.length.should.eql(3);
         done();
       });

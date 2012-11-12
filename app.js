@@ -60,7 +60,7 @@ function checkStarted(req, res, next) {
 // Join a game
 app.get('/api/join', checkAuth, function(req, res) {
   if (req.game.join()) {
-    res.send(200);
+    res.send(200, req.game.game());
   } else {
     res.send(404);
   }
@@ -68,6 +68,12 @@ app.get('/api/join', checkAuth, function(req, res) {
 
 // Input a move
 app.get('/api/move/:move?', checkAuth, checkJoined, checkStarted, function(req, res) {
+  var currentGame = req.game.game();
+  if (currentGame.status !== 1) {
+    var message = (currentGame.status === 0) ? 'Game is not ready!' : 'Game is over';
+    res.send(406, {error: message});
+  }
+
   if (!req.params.move) {
     res.json(req.game.lastMove());
   } else {
