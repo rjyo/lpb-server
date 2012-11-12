@@ -13,7 +13,14 @@ app.use(express.bodyParser());
 app.get('/api/create/:board', function(req, res) {
   if (/^[a-zA-Z]{25}$/.test(req.params.board)) {
     var gameId = l.createGame(req.params.board);
-    res.json({game_id: gameId});
+    var playerId = req.headers['x-lpb-player_id'];
+    if (playerId) {
+      req.game = new l.Game(gameId, playerId)
+      req.game.join();
+      res.json(req.game.game());
+    } else {
+      res.json({game_id: gameId});
+    }
   } else {
     res.send(406, {error: 'Format error for board: ' + req.params.board});
   }
